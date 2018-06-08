@@ -10,6 +10,9 @@
     <Version>1.0.0</Version>
     <Description>Helper classes for access to opening times stored as content types in a Contensis CMS</Description>
     <PackageReleaseNotes>Intial test release</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/UniversityOfBrightonComputing/Contensis.OpeningHours</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/UniversityOfBrightonComputing/Contensis.OpeningHours.git</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
