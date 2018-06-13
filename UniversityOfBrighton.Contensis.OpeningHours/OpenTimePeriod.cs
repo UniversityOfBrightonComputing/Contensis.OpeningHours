@@ -1,29 +1,35 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Zengenti.Contensis.Delivery;
 
 namespace UniversityOfBrighton.Contensis.OpeningHours
 {
     /// <summary>
-    /// For exporting openTimePeriod Items from the CMS
+    /// Defines a period during which something is open on given days for possibly different times
     /// </summary>
     public class OpenTimePeriod
     {
         public string Name;
+        // Taxonomy keys for the different types this period applies to
         public string[] PeriodFor;
+        // 1 is lowest
         public int Priority;
         public DateRange When;
         public List<DayOpenTime> DayOpenTimes;
         public List<DateTime?> Exceptions; // nullable because CMS sets initial first value to null
 
-        public class DayOpenTime
+        /// <summary>
+        /// Range of dates applicable for
+        /// </summary>
+        public struct DateRange
         {
-            public List<DayOfWeek> Days;
-            public string Start;
-            public string End;
+            public DateTime? From;
+            public DateTime? To;
         }
 
+        /// <summary>
+        /// One time for which is open
+        /// </summary>
         public struct OpenTime
         {
             public string Start;
@@ -40,38 +46,39 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             return (When.From <= date.Date && When.To >= date.Date && !MatchesException(date));
         }
 
-        // If there is at least one non-null member of Exceptions which matches the date then exclude
+        /// <summary>
+        /// If there is at least one non-null member of Exceptions which matches the date then should exclude
+        /// </summary>
+        /// <param name="date">The DateTime to check</param>
+        /// <returns>True if the date should be excluded, False if not</returns>
         public bool MatchesException(DateTime date)
         {
             return (Exceptions == null) ? false : Exceptions.Any(d => d != null && d.Value.Date == date.Date);
         }
 
-
         /// <summary>
-        /// For a given DateTime works out if the time is Open or Closed
+        /// For a given DateTime works out if the time is Open or Closed throws ArgumentOutOfRangeException if
+        /// the date is not within this range because the result would be wrong.
         /// </summary>
         /// <param name="date">DateTime must be within the period or throws ArgumentOutOfRangeException</param>
-        /// <returns>True if open</returns>
+        /// <returns>True if open, False if not</returns>
         public bool IsOpen(DateTime date)
         {
             if (!WithinPeriod(date))
             {
-                throw new ArgumentOutOfRangeException("Date is not within period");
+                throw new ArgumentOutOfRangeException("date",
+                    "Date is not within period, make sure to check with WithinPeriod() before calling");
             }
 
             // Any DayOpenTimes which match on day of the week
             var day = date.DayOfWeek;
             var matchingDayOpenTimes = DayOpenTimes.Where(d => d.Days.Contains(day));
 
-            // Search matching times to see if time is within start and end and 
+            // Check matchingDayOpenTimes to see if is open for the time of day
             var time = date.TimeOfDay;
             foreach (var dayOpenTime in matchingDayOpenTimes)
             {
-                if (IsOpen24Hours(dayOpenTime))
-                {
-                    return true;
-                }
-                else if(HasOpenedBy(dayOpenTime, time) && IsStillOpenAt(dayOpenTime, time))
+                if (dayOpenTime.IsOpenAt(time))
                 {
                     return true;
                 }
@@ -79,34 +86,13 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
 
             // If not found then now is not open
             return false;
-
         }
 
-        public bool IsOpen24Hours(DayOpenTime dayOpenTime)
-        {
-            return (dayOpenTime.Start == "0:00" && dayOpenTime.End == "0:00");
-        }
-
-        public bool HasOpenedBy(DayOpenTime dayOpenTime, TimeSpan time)
-        {
-            var start = TimeSpan.Parse(dayOpenTime.Start);
-            return (time >= start);
-        }
-
-        public bool IsStillOpenAt(DayOpenTime dayOpenTime, TimeSpan time)
-        {
-            if(dayOpenTime.End == "0:00")
-            {
-                return true;
-            }
-            else
-            {
-                var end = TimeSpan.Parse(dayOpenTime.End);
-                return (time < end);
-            }
-            
-        }
-
+        /// <summary>
+        /// For a given DayOfWeek return a list of OpenTimes
+        /// </summary>
+        /// <param name="day">DayOfWeek to check</param>
+        /// <returns>List of OpenTimes times for day</returns>
         public List<OpenTime> GetOpenTimesForDayOfWeek(DayOfWeek day)
         {
             return DayOpenTimes

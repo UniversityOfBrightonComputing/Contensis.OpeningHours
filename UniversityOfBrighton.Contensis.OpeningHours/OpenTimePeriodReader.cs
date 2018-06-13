@@ -1,94 +1,51 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Zengenti.Contensis.Delivery;
 using Zengenti.Data;
 
 namespace UniversityOfBrighton.Contensis.OpeningHours
 {
     /// <summary>
-    /// Reader of the OpenTimePeriod 
+    /// Helper class for fetching lists of OpenTimePeriods from CMS
     /// </summary>
-    public class OpenTimePeriodReader
+    public static class OpenTimePeriodReader
     {
-        private ContensisClient Client;
-        private List<OpenTimePeriod> allPeriods;
-        private string PeriodContentName;
-
-        public List<OpenTimePeriod> AllPeriods
+        /// <summary>
+        /// Uses Delivery API to get list of OpenTimePeriod from the CMS
+        /// Does not use search because the search is cached whereas a list is up-to-date as soon as published
+        /// </summary>
+        /// <param name="client">Contensis Delivery API client</param>
+        /// <param name="type">Taxonomy key of the type to fetch, if null all OpenTimePeriods are returned</param>
+        /// <param name="periodContentName">Name of the content type in the CMS default is openTimePeriod</param>
+        /// <returns>List of OpenTimePeriods from CMS</returns>
+        public static List<OpenTimePeriod> FetchOpenTimePeriods(ContensisClient client, string type = null, string periodContentName = "openTimePeriod")
         {
-            get
+            var allPeriods = FetchAllOpenTimePeriods(client, periodContentName);
+            if(type == null)
             {
-                if(allPeriods == null)
+                return allPeriods;
+            }
+            else
+            {
+                var filteredPeriods = allPeriods.Where(p => p.PeriodFor.Contains(type));
+                if(filteredPeriods != null)
                 {
-                    throw new InvalidOperationException("List of periods have not yet been fetched from Server using FetchAllOpenTimePeriods()");
+                    return filteredPeriods.ToList();
                 }
                 else
                 {
-                    return allPeriods;
+                    return null;
                 }
             }
-
-            set
-            {
-                allPeriods = value;
-            }
-        }
-
-        public OpenTimePeriodReader(ContensisClient client, string periodContentName = "openTimePeriod")
-        {
-            Client = client;
-            PeriodContentName = periodContentName;
         }
 
         /// <summary>
-        /// Use to see if a date is open
+        /// Use client to fetch all the OpenTimePeriod content type entries from CMS
         /// </summary>
-        /// <param name="date">The DateTime to check</param>
-        /// <returns>True if is open false if not</returns>
-        public bool IsOpen(DateTime date, string type)
-        {
-            var matchPeriod = GetMostApplicableTimePeriod(date, type);
-            if(matchPeriod != null)
-            {
-                return matchPeriod.IsOpen(date);
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public OpenTimePeriod GetMostApplicableTimePeriod(DateTime date, string type)
-        {
-            var matchingPeriods = AllPeriods.Where(p => p.PeriodFor.Contains(type) && p.WithinPeriod(date));
-            if (matchingPeriods.Any())
-            {
-                int maxPriority = matchingPeriods.Max(p => p.Priority);
-                return matchingPeriods.Where(p => p.Priority == maxPriority).FirstOrDefault();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public string GetMostApplicableTimePeriodName(DateTime date, string type)
-        {
-            var period = GetMostApplicableTimePeriod(date, type);
-            if(period != null)
-            {
-                return period.Name;
-            }
-            else
-            {
-                return $"TimePeriod not found for {date}";
-            }
-            
-        }
-
-        public void FetchAllOpenTimePeriods()
+        /// <param name="client">Contensis Delivery API client</param>
+        /// <param name="contentName">Name of content type in the CMS</param>
+        /// <returns>List of all OpenTimePeriods</returns>
+        public static List<OpenTimePeriod> FetchAllOpenTimePeriods(ContensisClient client, string contentName)
         {
             bool morePages = true;
             int pageSize = 25;
@@ -98,7 +55,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
 
             while (morePages)
             {
-                var results = Client.Entries.List<OpenTimePeriod>(PeriodContentName, new PageOptions(pageIndex, pageSize));
+                var results = client.Entries.List<OpenTimePeriod>(contentName, new PageOptions(pageIndex, pageSize));
                 foreach (var item in results.Items)
                 {
                     list.Add(item);
@@ -106,22 +63,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
                 pageIndex += pageSize;
                 morePages = list.Count < results.TotalCount;
             }
-            AllPeriods = list;
+            return list;
         }
-
-        public List<OpenTimePeriod.OpenTime> GetOpenTimesForDay(DateTime date, string type)
-        {
-            var period = GetMostApplicableTimePeriod(date, type);
-            if(period != null)
-            {
-                return period.GetOpenTimesForDayOfWeek(date.DayOfWeek);
-            }
-            else
-            {
-                return new List<OpenTimePeriod.OpenTime>();
-            }
-        }
-
-
     }
 }
