@@ -27,15 +27,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             }
             else
             {
-                var filteredPeriods = allPeriods.Where(p => p.PeriodFor.Contains(type));
-                if(filteredPeriods != null)
-                {
-                    return filteredPeriods.ToList();
-                }
-                else
-                {
-                    return null;
-                }
+                return FilterListByType(allPeriods, type);
             }
         }
 
@@ -64,6 +56,19 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
                 morePages = list.Count < results.TotalCount;
             }
             return list;
+        }
+
+        public static List<OpenTimePeriod> FilterListByType(List<OpenTimePeriod> list, string type)
+        {
+            if(list != null)
+            {
+                var filteredPeriods = list.Where(p => p.PeriodFor.Contains(type));
+                if (filteredPeriods != null)
+                {
+                    return filteredPeriods.ToList();
+                }
+            }
+            return null;
         }
     }
 }

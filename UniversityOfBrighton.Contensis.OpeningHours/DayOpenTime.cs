@@ -12,6 +12,8 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         public string Start;
         public string End;
 
+        private static TimeSpan midnight = new TimeSpan(0, 0, 0);
+
         /// <summary>
         /// For a given time is it open
         /// </summary>
@@ -35,7 +37,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns>True if is open 24 hours (e.g. counts as open for all times on matching days</returns>
         public bool IsOpen24Hours()
         {
-            return (Start == "0:00" && End == "0:00");
+            return (TimeSpan.Parse(Start) == midnight && TimeSpan.Parse(End) == midnight);
         }
 
         /// <summary>
@@ -45,8 +47,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns></returns>
         public bool HasOpenedBy(TimeSpan time)
         {
-            var start = TimeSpan.Parse(Start);
-            return (time >= start);
+            return (time >= TimeSpan.Parse(Start));
         }
 
         /// <summary>
@@ -56,13 +57,13 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns></returns>
         public bool IsStillOpenAt(TimeSpan time)
         {
-            if (End == "0:00")
+            var end = TimeSpan.Parse(End);
+            if (end == midnight)
             {
                 return true;
             }
             else
             {
-                var end = TimeSpan.Parse(End);
                 return (time < end);
             }
         }
