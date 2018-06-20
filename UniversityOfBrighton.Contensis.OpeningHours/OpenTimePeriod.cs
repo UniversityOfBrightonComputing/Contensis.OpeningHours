@@ -34,6 +34,9 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         {
             public string Start;
             public string End;
+
+            public TimeSpan StartTime => TimeSpan.Parse(Start);
+            public TimeSpan EndTime => TimeSpan.Parse(End);
         }
 
         /// <summary>
