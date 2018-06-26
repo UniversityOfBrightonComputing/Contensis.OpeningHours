@@ -175,25 +175,24 @@ namespace OpeningHoursUnitTests
         {
             var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
             var checker = new OpenTimeChecker(filteredPeriods);
-            string name;
 
             // Christmas is a Tuesday
             var christmasLunch = DateTime.Parse("2018-12-25 12:00:00");
 
-            Assert.True(checker.IsOpen(christmasLunch, out name));
-            Assert.Equal("Test Open Time Period 4", name);
+            Assert.True(checker.IsOpen(christmasLunch, out string xDayLunchPeriod));
+            Assert.Equal("Test Open Time Period 4", xDayLunchPeriod);
 
             // Boxing day is a Wednesday , so closed according to Test 2
             // Even though Test 3 says is open (has lower Priority)
             var boxingDayLunch = DateTime.Parse("2018-12-26 12:00:00");
 
-            Assert.False(checker.IsOpen(boxingDayLunch, out name));
-            Assert.Equal("Test Open Time Period 2", name);
+            Assert.False(checker.IsOpen(boxingDayLunch, out string boxDayLunchPeriod));
+            Assert.Equal("Test Open Time Period 2", boxDayLunchPeriod);
 
         }
 
         [Fact]
-        public void IsOpen_OutNextTimeClosed()
+        public void IsOpen_OutNextTimeClosed1()
         {
             var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
             var checker = new OpenTimeChecker(filteredPeriods);
@@ -206,7 +205,19 @@ namespace OpeningHoursUnitTests
         }
 
         [Fact]
-        public void IsOpen_OutNextTimeOpen()
+        public void IsOpen_OutNextTimeOpen1()
+        {
+            var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test1");
+            var checker = new OpenTimeChecker(filteredPeriods);
+
+            // 1st Jan is Monday, so next should open at 9:00
+            var checkTime = DateTime.Parse("2018-01-01 08:30:00");
+            Assert.False(checker.IsOpen(checkTime, out DateTime? nextTime));
+            Assert.Equal(DateTime.Parse("2018-01-01 09:00:00"), nextTime);
+        }
+
+        [Fact]
+        public void IsOpen_OutNextTimeOpen2()
         {
             var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
             var checker = new OpenTimeChecker(filteredPeriods);

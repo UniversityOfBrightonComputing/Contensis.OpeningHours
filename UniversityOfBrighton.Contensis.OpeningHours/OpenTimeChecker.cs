@@ -26,7 +26,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         public bool IsOpen(DateTime date)
         {
             var matchPeriod = GetMostApplicableTimePeriod(date);
-            if(matchPeriod != null)
+            if (matchPeriod != null)
             {
                 return matchPeriod.IsOpen(date);
             }
@@ -73,22 +73,85 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             bool isOpen = (matchPeriod != null && matchPeriod.IsOpen(date));
             if (isOpen)
             {
-                nextTime = GetNextClosingTime(date);
+                nextTime = GetNextClosingTime(date, matchPeriod);
             }
             else
             {
-                nextTime = GetNextOpenTime(date);
+                nextTime = GetNextOpenTime(date, matchPeriod);
             }
             return isOpen;
         }
 
-        private DateTime? GetNextOpenTime(DateTime date)
+        private DateTime? GetNextOpenTime(DateTime date, OpenTimePeriod matchPeriod)
         {
+            // try to find the next open time in today's matchPeriod
+            var dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
+            // get DayOpenTimes for today where start hasn't happened yet
+            var opensToCome = dayOpenTimesForToday.Where(d => d.StartTime > date.TimeOfDay);
+            if (opensToCome.Count() > 0)
+            {
+                var earliestStartTime = opensToCome.Min(d => d.StartTime.Value);
+                return date.Date.Add(earliestStartTime);
+            }
+
+            // TODO add in test for beyond 7 days
+            // get the first open time tomorrow (then loop increasing days)
+            var loopNumber = 0;
+            while (loopNumber < 7)
+            {
+                date = date.AddDays(1);
+                matchPeriod = GetMostApplicableTimePeriod(date);
+                if(matchPeriod != null)
+                {
+                    dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
+                    if (dayOpenTimesForToday.Any(d => d.StartTime != null))
+                    {
+                        var earliestStartTime = dayOpenTimesForToday.Min(d => d.StartTime.Value);
+                        return date.Date.Add(earliestStartTime);
+                    }
+
+                }
+                loopNumber++;
+            }
+            // by default we return null
             return null;
         }
 
-        private DateTime? GetNextClosingTime(DateTime date)
+        private DateTime? GetNextClosingTime(DateTime date, OpenTimePeriod matchPeriod)
         {
+            // try to next closing time today
+            var dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
+            // get DayOpenTimes for today where end hasn't happened yet
+            var closesToCome = dayOpenTimesForToday.Where(d => d.EndTime > date.TimeOfDay);
+            if (closesToCome.Count() > 0)
+            {
+                var earliestEndTime = closesToCome.Min(d => d.EndTime.Value);
+                return date.Date.Add(earliestEndTime);
+            }
+
+            // TODO add in test for beyond 7 days
+            // get the first end time tomorrow (then loop increasing days)
+            var loopNumber = 0;
+            while (loopNumber < 7)
+            {
+                date = date.AddDays(1);
+                matchPeriod = GetMostApplicableTimePeriod(date);
+                if (matchPeriod == null)
+                {
+                    return date.Date;
+                }
+                else
+                {
+                    dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
+                    if (dayOpenTimesForToday.Any(d => d.EndTime != null))
+                    {
+                        var earliestEndTime = dayOpenTimesForToday.Min(d => d.StartTime.Value);
+                        return date.Date.Add(earliestEndTime);
+                    }
+                }
+                loopNumber++;
+            }
+            // by default we return null
             return null;
         }
 
@@ -114,6 +177,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             }
         }
 
+
         /// <summary>
         /// For a given DateTime return a list (in case there is more than one) of OpenTimes
         /// useful for outputting on page or for Google MyBusiness
@@ -123,7 +187,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         public List<OpenTimePeriod.OpenTime> GetOpenTimesForDay(DateTime date)
         {
             var period = GetMostApplicableTimePeriod(date);
-            if(period != null)
+            if (period != null)
             {
                 return period.GetOpenTimesForDayOfWeek(date.DayOfWeek);
             }

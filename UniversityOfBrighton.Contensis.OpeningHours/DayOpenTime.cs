@@ -12,10 +12,39 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         public string Start;
         public string End;
 
-        public TimeSpan StartTime => TimeSpan.Parse(Start);
-        public TimeSpan EndTime => TimeSpan.Parse(End);
+        public TimeSpan? StartTime
+        {
+            get
+            {
+                if(Start == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    return TimeSpan.Parse(Start);
+                }
+                
+            }
+        }
 
-        private static TimeSpan midnight = new TimeSpan(0, 0, 0);
+        public TimeSpan? EndTime
+        {
+            get
+            {
+                if(End == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    return TimeSpan.Parse(End);
+                }
+                
+            }
+        }
+
+        private static TimeSpan Midnight = new TimeSpan(0, 0, 0);
 
         /// <summary>
         /// For a given time is it open
@@ -40,7 +69,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns>True if is open 24 hours (e.g. counts as open for all times on matching days</returns>
         public bool IsOpen24Hours()
         {
-            return (StartTime == midnight && EndTime == midnight);
+            return (StartTime == Midnight && EndTime == Midnight);
         }
 
         /// <summary>
@@ -50,7 +79,15 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns></returns>
         public bool HasOpenedBy(TimeSpan time)
         {
-            return (time >= StartTime);
+            if(StartTime == null)
+            {
+                return true;
+            }
+            else
+            {
+                return (time >= StartTime);
+            }
+            
         }
 
         /// <summary>
@@ -60,14 +97,13 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <returns></returns>
         public bool IsStillOpenAt(TimeSpan time)
         {
-            var end = EndTime;
-            if (end == midnight)
+            if (EndTime == null || EndTime == Midnight)
             {
                 return true;
             }
             else
             {
-                return (time < end);
+                return (time < EndTime);
             }
         }
     }
