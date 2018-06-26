@@ -103,5 +103,15 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
                 .Select(d => new OpenTime { Start = d.Start, End = d.End })
                 .ToList();
         }
+
+        /// <summary>
+        /// For a given DayOfWeek return a list of DayOpenTimes
+        /// </summary>
+        /// <param name="day">DayOfWeek to check</param>
+        /// <returns>List of DayOpenTimes times for day</returns>
+        public List<DayOpenTime> GetDayOpenTimesForDayOfWeek(DayOfWeek day)
+        {
+            return DayOpenTimes.Where(d => d.Days.Contains(day)).ToList();
+        }
     }
 }

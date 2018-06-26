@@ -110,7 +110,7 @@ namespace OpeningHoursUnitTests
                 When = new OpenTimePeriod.DateRange
                 {
                     From = DateTime.Parse("2018-06-01"),
-                    To = DateTime.Parse("2018-12-31")
+                    To = DateTime.Parse("2018-12-26")
                 },
                 DayOpenTimes = new List<DayOpenTime>
                 {
@@ -171,15 +171,16 @@ namespace OpeningHoursUnitTests
         }
 
         [Fact]
-        public void IsOpen_Out()
+        public void IsOpen_OutName()
         {
             var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
             var checker = new OpenTimeChecker(filteredPeriods);
+            string name;
 
             // Christmas is a Tuesday
             var christmasLunch = DateTime.Parse("2018-12-25 12:00:00");
 
-            Assert.True(checker.IsOpen(christmasLunch, out var name));
+            Assert.True(checker.IsOpen(christmasLunch, out name));
             Assert.Equal("Test Open Time Period 4", name);
 
             // Boxing day is a Wednesday , so closed according to Test 2
@@ -189,6 +190,32 @@ namespace OpeningHoursUnitTests
             Assert.False(checker.IsOpen(boxingDayLunch, out name));
             Assert.Equal("Test Open Time Period 2", name);
 
+        }
+
+        [Fact]
+        public void IsOpen_OutNextTimeClosed()
+        {
+            var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
+            var checker = new OpenTimeChecker(filteredPeriods);
+
+            // Christmas is a Tuesday so open according to Test 4
+            // Next time should same day at 12:30 because that is Tuesday closing time
+            var christmasLunch = DateTime.Parse("2018-12-25 12:00:00");
+            Assert.True(checker.IsOpen(christmasLunch, out DateTime? nextTime));
+            Assert.Equal(DateTime.Parse("2018-12-25 12:30:00"), nextTime);
+        }
+
+        [Fact]
+        public void IsOpen_OutNextTimeOpen()
+        {
+            var filteredPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, "test3");
+            var checker = new OpenTimeChecker(filteredPeriods);
+
+            // Boxing day is a Wednesday , so closed according to Test 2
+            // The next open should be Monday 31 Dec at 9am (according to Test 2
+            var boxingDayLunch = DateTime.Parse("2018-12-26 12:00:00");
+            Assert.False(checker.IsOpen(boxingDayLunch, out DateTime? nextTime));
+            Assert.Equal(DateTime.Parse("2018-12-31 09:00:00"), nextTime);
         }
 
         [Fact]

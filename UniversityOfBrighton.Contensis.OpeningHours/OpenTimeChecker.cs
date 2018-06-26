@@ -61,6 +61,38 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         }
 
         /// <summary>
+        /// According to the intialised OpenTimePeriods is this DateTime open? Records the name of the
+        /// OpenTimePeriod used
+        /// </summary>
+        /// <param name="date">A DateTime to check against intialised OpenTimePeriods</param>
+        /// <param name="name">The name of the matching OpenTimePeriod used to determine if open</param>
+        /// <returns>True if is open False if not</returns>
+        public bool IsOpen(DateTime date, out DateTime? nextTime)
+        {
+            var matchPeriod = GetMostApplicableTimePeriod(date);
+            bool isOpen = (matchPeriod != null && matchPeriod.IsOpen(date));
+            if (isOpen)
+            {
+                nextTime = GetNextClosingTime(date);
+            }
+            else
+            {
+                nextTime = GetNextOpenTime(date);
+            }
+            return isOpen;
+        }
+
+        private DateTime? GetNextOpenTime(DateTime date)
+        {
+            return null;
+        }
+
+        private DateTime? GetNextClosingTime(DateTime date)
+        {
+            return null;
+        }
+
+        /// <summary>
         /// Find the highest priority OpenTimePeriod from intialised list
         /// which is within the time range and isn't for an excluded date
         /// NB If 2 or more periods both match the DateTime and have the same
