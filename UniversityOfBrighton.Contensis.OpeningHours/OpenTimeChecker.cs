@@ -67,22 +67,22 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
         /// <param name="date">A DateTime to check against intialised OpenTimePeriods</param>
         /// <param name="name">The name of the matching OpenTimePeriod used to determine if open</param>
         /// <returns>True if is open False if not</returns>
-        public bool IsOpen(DateTime date, out DateTime? nextTime)
+        public bool IsOpen(DateTime date, out DateTime? nextTime, int maxAheadDays = 7)
         {
             var matchPeriod = GetMostApplicableTimePeriod(date);
             bool isOpen = (matchPeriod != null && matchPeriod.IsOpen(date));
             if (isOpen)
             {
-                nextTime = GetNextClosingTime(date, matchPeriod);
+                nextTime = GetNextClosingTime(date, matchPeriod, maxAheadDays);
             }
             else
             {
-                nextTime = GetNextOpenTime(date, matchPeriod);
+                nextTime = GetNextOpenTime(date, matchPeriod, maxAheadDays);
             }
             return isOpen;
         }
 
-        private DateTime? GetNextOpenTime(DateTime date, OpenTimePeriod matchPeriod)
+        private DateTime? GetNextOpenTime(DateTime date, OpenTimePeriod matchPeriod, int maxAheadDays = 7)
         {
             // try to find the next open time in today's matchPeriod
             var dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
@@ -97,7 +97,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             // TODO add in test for beyond 7 days
             // get the first open time tomorrow (then loop increasing days)
             var loopNumber = 0;
-            while (loopNumber < 7)
+            while (loopNumber < maxAheadDays)
             {
                 date = date.AddDays(1);
                 matchPeriod = GetMostApplicableTimePeriod(date);
@@ -117,7 +117,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             return null;
         }
 
-        private DateTime? GetNextClosingTime(DateTime date, OpenTimePeriod matchPeriod)
+        private DateTime? GetNextClosingTime(DateTime date, OpenTimePeriod matchPeriod, int maxAheadDays = 7)
         {
             // try to next closing time today
             var dayOpenTimesForToday = matchPeriod.GetDayOpenTimesForDayOfWeek(date.DayOfWeek);
@@ -132,7 +132,7 @@ namespace UniversityOfBrighton.Contensis.OpeningHours
             // TODO add in test for beyond 7 days
             // get the first end time tomorrow (then loop increasing days)
             var loopNumber = 0;
-            while (loopNumber < 7)
+            while (loopNumber < maxAheadDays)
             {
                 date = date.AddDays(1);
                 matchPeriod = GetMostApplicableTimePeriod(date);
