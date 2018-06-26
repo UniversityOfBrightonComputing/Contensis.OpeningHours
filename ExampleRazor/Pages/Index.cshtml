@@ -1,0 +1,42 @@
+﻿@page
+@model IndexModel
+@using System
+@using System.Linq
+@using Zengenti.Contensis.Delivery
+@using UniversityOfBrighton.Contensis.OpeningHours
+
+@{ 
+    var checker = GetChecker();
+    var now = DateTime.Now;
+    var isOpen = checker.IsOpen(now, out DateTime? nextOpen);
+
+
+}
+<div>
+    @if(checker.IsOpen(DateTime.Now))
+    {
+        <p>We are open (display number)</p>
+    }
+    else
+    {
+        <p>We are closed (but will open at: @nextOpen)</p>
+    }
+
+</div>
+@functions{
+    public OpenTimeChecker GetChecker()
+    {
+        var enquiriesTaxonomyKey = "0/1275/1276";
+        // For Local dev (razor page) use
+        var client = ContensisClient.Create(
+            "website",
+            Model.Configuration["Contensis:RootUrl"],
+            Model.Configuration["Contensis:ClientId"],
+            Model.Configuration["Contensis:SharedSecret"]
+        );
+        var allPeriods = OpenTimePeriodReader.FetchAllOpenTimePeriods(client, "openTimePeriod");
+        var enquiriesPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, enquiriesTaxonomyKey);
+        return new OpenTimeChecker(enquiriesPeriods);
+    }
+
+}

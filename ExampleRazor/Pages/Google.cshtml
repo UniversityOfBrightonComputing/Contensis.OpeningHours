@@ -1,0 +1,47 @@
+﻿@page
+@model GoogleModel
+@using System
+@using Zengenti.Contensis.Delivery
+@using UniversityOfBrighton.Contensis.OpeningHours
+
+@{ 
+    var enquiriesTaxonomyKey = "0/1275/1276";
+
+    // For Local dev (razor page) use
+    var client = ContensisClient.Create(
+        "website",
+        Model.Configuration["Contensis:RootUrl"],
+        Model.Configuration["Contensis:ClientId"],
+        Model.Configuration["Contensis:SharedSecret"]
+    );
+    // For main site use this
+    //var client = ContensisClient.Create();
+    var allPeriods = OpenTimePeriodReader.FetchAllOpenTimePeriods(client, "openTimePeriod");
+    var enquiriesPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, enquiriesTaxonomyKey);
+    var checker = new OpenTimeChecker(enquiriesPeriods);
+    var dateToCheck = DateTime.Now;
+    var endOfYear = DateTime.Parse("2018-12-31");
+}
+<div>
+    @while (dateToCheck.Date <= endOfYear)
+    {
+        var openTimes = checker.GetOpenTimesForDay(dateToCheck);
+        if (openTimes.Count > 0)
+        {
+            foreach (var ot in openTimes)
+            {
+                <p>@dateToCheck.ToString("MMM dd, ddd"): @ot.Start - @ot.End</p>
+            }
+        }
+        else
+        {
+                <p>@dateToCheck.ToString("MMM dd, ddd"): CLOSED</p>
+        }
+
+        dateToCheck = dateToCheck.AddDays(1);
+    }
+
+</div>
+@functions{
+
+}
