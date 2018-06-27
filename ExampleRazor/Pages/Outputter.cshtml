@@ -1,0 +1,27 @@
+﻿@page
+@model OutputterModel
+@using System
+@using Zengenti.Contensis.Delivery
+@using UniversityOfBrighton.Contensis.OpeningHours
+
+@{
+    var testKey = "0/1275/1281";
+    var client = ContensisClient.Create(
+        "website",
+        Model.Configuration["Contensis:RootUrl"],
+        Model.Configuration["Contensis:ClientId"],
+        Model.Configuration["Contensis:SharedSecret"]
+    );
+    var periodList = OpenTimePeriodReader.FetchOpenTimePeriods(client, testKey, "openTimePeriod");
+    var checker = new OpenTimeChecker(periodList);
+}
+<div>
+    @if (checker.IsOpen(DateTime.Now))
+    {
+        <p>OPEN</p>
+    }
+    else
+    {
+        <p>CLOSED</p>
+    }
+</div>

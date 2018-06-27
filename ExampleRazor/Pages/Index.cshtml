@@ -1,7 +1,6 @@
 ﻿@page
 @model IndexModel
 @using System
-@using System.Linq
 @using Zengenti.Contensis.Delivery
 @using UniversityOfBrighton.Contensis.OpeningHours
 
@@ -35,11 +34,9 @@
         Model.Configuration["Contensis:ClientId"],
         Model.Configuration["Contensis:SharedSecret"]
     );
-        var allPeriods = OpenTimePeriodReader.FetchAllOpenTimePeriods(client, "openTimePeriod");
-        //var enquiriesPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, enquiriesTaxonomyKey);
-        //return new OpenTimeChecker(enquiriesPeriods);
-        var testPeriods = OpenTimePeriodReader.FilterListByType(allPeriods, testKey);
-        return new OpenTimeChecker(testPeriods);
+        var periodList = OpenTimePeriodReader.FetchOpenTimePeriods(client, enquiriesTaxonomyKey, "openTimePeriod" );
+        //var periodList = OpenTimePeriodReader.FetchOpenTimePeriods(client, "openTimePeriod", testKey);
+        return new OpenTimeChecker(periodList);
 
     }
 
